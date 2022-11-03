@@ -1,4 +1,5 @@
 import { create, IPFSHTTPClient } from 'ipfs-http-client';
+import { logger } from './utils';
 
 const Auth = 'c3ViLTVGcXdqWW9MUXE5Z2NXSGM2azVZd3RuZHg3Q01pQ1FlS1N2THpYb2plZ3ZYY005bToweDIwZjYxODc5ODhiNjIxZjk3ZDQwNGZlZmMzZTQ5MWU5OTU0MWY5MzdjNDNiYWQyNWE3NGQ2OTRjMjA2NWYzODFkOTc5YmY0YTQzYmI3MGZlYzY1MzIwMGI2MmFhZmRiOWFjNzEwODc1YzlkMjhlYTJjNTA2ZDcyZDc1Y2RjNzA2'
 const Timeout = 8000 * 1000; // 8000s
@@ -14,6 +15,7 @@ export default class IpfsApi {
             },
             timeout: Timeout
         });
+        logger.info('[Ipfs] connected');
     }
 
     async linkCids(ipfsPath: string): Promise<string[]> {

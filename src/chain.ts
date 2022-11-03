@@ -12,7 +12,7 @@ export default class ChainApi {
         this.endponit = endponit;
     }
 
-    async initApi(): Promise<void> {
+    async init(): Promise<void> {
         if (this.api && this.api.disconnect) {
             this.api.disconnect().then().catch();
         }
@@ -24,9 +24,10 @@ export default class ChainApi {
 
         await this.api.isReady;
         while (!this.api.isConnected) {
-            logger.info('waiting for api to connect');
+            logger.info('[Chain] Waiting for api to connect');
             await sleep(2 * 1000);
         }
+        logger.info('[Chain] connected');
     }
 
     // stop this api instance
@@ -43,7 +44,7 @@ export default class ChainApi {
     async reconnect(): Promise<void> {
         await this.stop();
         await sleep(30 * 1000);
-        await this.initApi();
+        await this.init();
         await sleep(10 * 1000);
     }
 
@@ -67,7 +68,7 @@ export default class ChainApi {
         while (!(await this.withApiReady())) {
             logger.info('⛓ Connection broken, waiting for chain running.');
             await sleep(6000); // IMPORTANT: Sequential matters(need give time for create ApiPromise)
-            this.initApi(); // Try to recreate api to connect running chain
+            this.init(); // Try to recreate api to connect running chain
         }
 
         // Waiting for chain synchronization

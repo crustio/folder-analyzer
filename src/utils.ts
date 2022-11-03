@@ -2,10 +2,12 @@ import Bluebird from 'bluebird';
 import { createLogger, format, transports } from 'winston';
 import ChainApi from './chain';
 import IpfsApi from './ipfs';
+import MysqlApi from './mysql';
 
 export interface AppContext {
     chain: ChainApi;
     ipfs: IpfsApi;
+    mysql: MysqlApi;
 }
 
 export const sleep = (t: number): Promise<void> => Bluebird.delay(t);

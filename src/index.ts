@@ -4,11 +4,23 @@ import timeout from 'connect-timeout';
 import IpfsApi from './ipfs';
 import { AppContext, logger } from './utils';
 import ChainApi from './chain';
+import MysqlApi from './mysql';
 
+// Read command line parameters
 const APITimeout = '600s'
-const Port = process.argv[2] || 17635;
-const Gateway = process.argv[3] || "https://crustwebsites.net";
-const ChainEndpoint = process.argv[4] || "wss://rpc.crust.network";
+const DBUser = process.argv[2];
+if (!DBUser) {
+    logger.error(`[global]: Please provide DB user name`);
+    process.exit(-1);
+}
+const DBpassword = process.argv[3];
+if (!DBpassword) {
+    logger.error(`[global]: Please provide DB password`);
+    process.exit(-1);
+}
+const Port = process.argv[4] || 17635;
+const Gateway = process.argv[5] || "https://crustwebsites.net";
+const ChainEndpoint = process.argv[6] || "wss://rpc.crust.network";
 
 const app = express();
 
@@ -22,11 +34,16 @@ async function main() {
     const ipfs = new IpfsApi(Gateway);
     // Connect chain
     const chain = new ChainApi(ChainEndpoint);
-    await chain.initApi();
+    await chain.init();
+    // Connect mysql
+    const mysql = new MysqlApi(DBUser, DBpassword);
+    await mysql.connect();
+
     // Context
     const context: AppContext = {
         chain,
-        ipfs
+        ipfs,
+        mysql
     }
 
     // Log handler
