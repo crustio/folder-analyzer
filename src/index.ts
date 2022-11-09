@@ -1,13 +1,15 @@
 import express, { NextFunction } from 'express';
-import { Request, Response } from 'express';
+import { Header } from '@polkadot/types/interfaces';
 import timeout from 'connect-timeout';
 import IpfsApi from './ipfs';
 import { AppContext, logger } from './utils';
 import ChainApi from './chain';
 import MysqlApi from './mysql';
+import { findRootHander, folderParserHandler, folderTxHander } from './handler';
 
 // Read command line parameters
 const APITimeout = '600s'
+const ParserInterval = 6 * 1000; //6s
 const DBUser = process.argv[2];
 if (!DBUser) {
     logger.error(`[global]: Please provide DB user name`);
@@ -51,9 +53,14 @@ async function main() {
     // API timeout handler
     app.use(timeout(APITimeout));
     // Get routes
-    app.get('/api/v1/root', (req, res) => { findRootHander(req, res, context) });
+    app.get('/api/v1/root', (req, res) => findRootHander(req, res, context));
     // Error handler
     app.use(errorHandler);
+
+    // Subscribe new heads
+    context.chain.subscribeNewHeads((b: Header) => folderTxHander(b, context));
+    // Start folder parser handler
+    setInterval(() => folderParserHandler(context), ParserInterval)
 
     // Start express
     app.listen(Port, () => {
@@ -61,10 +68,6 @@ async function main() {
             `[global]: Folder analyzer is running at https://localhost:${Port}`
         );
     });
-}
-
-const findRootHander = async (req, res, context) => {
-    res.send("OK")
 }
 
 const errorHandler = (

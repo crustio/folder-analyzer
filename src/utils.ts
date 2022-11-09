@@ -10,6 +10,21 @@ export interface AppContext {
     mysql: MysqlApi;
 }
 
+export interface Folder {
+    cid: string;
+    size: number;
+    blockNum: number;
+}
+
+/**
+ * Convert from hex to string
+ * @param hex Hex string with prefix `0x`
+ * @returns With string back
+ */
+export function hexToString(hex: string): string {
+    return Buffer.from(hex.substring(2), 'hex').toString();
+}
+
 export const sleep = (t: number): Promise<void> => Bluebird.delay(t);
 
 export const logger = createLogger({

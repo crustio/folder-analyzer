@@ -1,8 +1,8 @@
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import { BlockHash, Header, SignedBlock } from '@polkadot/types/interfaces';
+import { BlockHash, Header, Extrinsic, EventRecord } from '@polkadot/types/interfaces';
 import { typesBundleForPolkadot, crustTypes } from '@crustio/type-definitions';
 import { UnsubscribePromise, VoidFn } from '@polkadot/api/types';
-import { logger, sleep } from './utils';
+import { Folder, hexToString, logger, sleep } from './utils';
 
 export default class ChainApi {
     private readonly endponit: string;
@@ -66,7 +66,7 @@ export default class ChainApi {
     async subscribeNewHeads(handler: (b: Header) => void): UnsubscribePromise {
         // Waiting for API
         while (!(await this.withApiReady())) {
-            logger.info('⛓ Connection broken, waiting for chain running.');
+            logger.info('[Chain] Connection broken, waiting for chain running.');
             await sleep(6000); // IMPORTANT: Sequential matters(need give time for create ApiPromise)
             this.init(); // Try to recreate api to connect running chain
         }
@@ -74,7 +74,7 @@ export default class ChainApi {
         // Waiting for chain synchronization
         while (await this.isSyncing()) {
             logger.info(
-                `⛓ Chain is synchronizing, current block number ${(
+                `[Chain] Chain is synchronizing, current block number ${(
                     await this.header()
                 ).number.toNumber()}`,
             );
@@ -87,10 +87,53 @@ export default class ChainApi {
         );
     }
 
+    async getBlockHash(blockNum: number): Promise<BlockHash> {
+        return this.api.rpc.chain.getBlockHash(blockNum);
+    }
+
+    async parseNewFolders(blockHash: string, blockNum: number): Promise<Folder[]> {
+        await this.withApiReady();
+        try {
+            const block = await this.api.rpc.chain.getBlock(blockHash);
+            const exs: Extrinsic[] = block.block.extrinsics;
+            const ers: EventRecord[] = await this.api.query.system.events.at(blockHash);
+            const newFolders: Folder[] = [];
+
+            for (const { event: { data, method }, phase, } of ers) {
+                if (method === 'FileSuccess') {
+                    if (data.length < 2) {
+                        continue
+                    };
+
+                    // Find new successful file order from extrinsincs
+                    const exIdx = phase.asApplyExtrinsic.toNumber();
+                    const ex = exs[exIdx];
+                    const exData = ex.method.args as any;
+                    if (exData[3] == "0x666c6f646572") {
+                        const size = exData[1].toNumber() / 1024 / 1024;
+                        if (size == 0) {
+                            logger.info(`[Chain] New folder find: ${hexToString(data[1].toString())}, size < 1MB`)
+                        } else {
+                            logger.info(`[Chain] New folder find: ${hexToString(data[1].toString())}, size: ${size} MB`)
+                        }
+                        newFolders.push({
+                            cid: hexToString(data[1].toString()),
+                            size: size,
+                            blockNum: blockNum
+                        });
+                    }
+                }
+            }
+            return newFolders;
+        } catch (err) {
+            logger.error(`[Chain] Parse folder error at block(${blockNum}): ${err}`);
+            return [];
+        }
+    }
     /**
-     * Used to determine whether the chain is synchronizing
-     * @returns true/false
-     */
+ * Used to determine whether the chain is synchronizing
+ * @returns true/false
+ */
     async isSyncing(): Promise<boolean> {
         const health = await this.api.rpc.system.health();
         let res = health.isSyncing.isTrue;
@@ -124,5 +167,4 @@ export default class ChainApi {
             return false;
         }
     }
-
 }
