@@ -63,7 +63,7 @@ async function main() {
     folderParserHandler(context, ParserInterval);
 
     // Start express
-    app.listen(Port, () => {
+    app.listen(Port, '0.0.0.0', () => {
         logger.info(
             `[global]: Folder analyzer is running at https://localhost:${Port}`
         );

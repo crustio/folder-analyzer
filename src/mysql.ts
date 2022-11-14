@@ -16,7 +16,7 @@ export default class MysqlApi {
 
     async connect() {
         this.connection = await mysql.createConnection({
-            host: 'localhost',
+            host: '127.0.0.1',
             user: this.user,
             password: this.password
         });
