@@ -14,10 +14,10 @@
   resolved "https://registry.npmjs.org/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@crustio/type-definitions@1.1.0":
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/@crustio/type-definitions/-/type-definitions-1.1.0.tgz#43bb0e1bbef6552586a753598915da0bfd66e9cd"
-  integrity sha512-+h1o5A7EEmn+RIyAhm+7nD6oDC+0Z/GRBn6RZ5R1BXokF0iY7UAkOUshE3m7xg/5FQEQZbnnfHuxWCLDL7oQ4A==
+"@crustio/type-definitions@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/@crustio/type-definitions/-/type-definitions-1.2.0.tgz#221a626b8e18ac77fb9e13e6b018803e78727b71"
+  integrity sha512-i/u3WUuhfC76JirlSwyGIKDwoFrax5QUonxGG/wgX2KEDKM9MIVx4qEsphE/tjAxlX1/qO3c72dzvKR2gndhgg==
   dependencies:
     "@open-web3/orml-type-definitions" "^0.8.2-9"
 
