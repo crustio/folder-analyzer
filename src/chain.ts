@@ -27,7 +27,7 @@ export default class ChainApi {
             logger.info('[Chain] Waiting for api to connect');
             await sleep(2 * 1000);
         }
-        logger.info('[Chain] connected');
+        logger.info('[Chain] Connected');
     }
 
     // stop this api instance
@@ -109,12 +109,13 @@ export default class ChainApi {
                     const exIdx = phase.asApplyExtrinsic.toNumber();
                     const ex = exs[exIdx];
                     const exData = ex.method.args as any;
-                    if (exData[3] == "0x666c6f646572") {
+                    // "0x666f6c646572" is 'folder'
+                    if (exData[3] == "0x666f6c646572") {
                         const size = exData[1].toNumber() / 1024 / 1024;
                         if (size == 0) {
-                            logger.info(`[Chain] New folder find: ${hexToString(data[1].toString())}, size < 1MB`)
+                            logger.info(`[chain] New folder find: ${hexToString(data[1].toString())}, size < 1MB`)
                         } else {
-                            logger.info(`[Chain] New folder find: ${hexToString(data[1].toString())}, size: ${size} MB`)
+                            logger.info(`[chain] New folder find: ${hexToString(data[1].toString())}, size: ${size} MB`)
                         }
                         newFolders.push({
                             cid: hexToString(data[1].toString()),
@@ -126,14 +127,11 @@ export default class ChainApi {
             }
             return newFolders;
         } catch (err) {
-            logger.error(`[Chain] Parse folder error at block(${blockNum}): ${err}`);
+            logger.error(`[chain] Parse folder error at block(${blockNum}): ${err}`);
             return [];
         }
     }
-    /**
- * Used to determine whether the chain is synchronizing
- * @returns true/false
- */
+
     async isSyncing(): Promise<boolean> {
         const health = await this.api.rpc.system.health();
         let res = health.isSyncing.isTrue;
@@ -150,10 +148,16 @@ export default class ChainApi {
         return res;
     }
 
-    /**
-     * Get best block's header
-     * @returns header
-     */
+    async replicaCount(cid: string): Promise<number> {
+        const file: any = await this.api.query.market.files(cid); // eslint-disable-line
+        if (file.isEmpty) {
+            return 0;
+        }
+        const fi = file.toJSON() as any; // eslint-disable-line
+        return fi.amount.toNumber();
+    }
+
+
     async header(): Promise<Header> {
         return this.api.rpc.chain.getHeader();
     }
@@ -163,7 +167,7 @@ export default class ChainApi {
             await this.api.isReadyOrError;
             return true;
         } catch (e) {
-            logger.error(`💥 Error connecting with Chain: %s`, e);
+            logger.error(`[chain] Error connecting with Chain: %s`, e);
             return false;
         }
     }

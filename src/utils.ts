@@ -25,7 +25,9 @@ export function hexToString(hex: string): string {
     return Buffer.from(hex.substring(2), 'hex').toString();
 }
 
-export const sleep = (t: number): Promise<void> => Bluebird.delay(t);
+export const sleep = async (t: number): Promise<void> => {
+    await Bluebird.delay(t);
+}
 
 export const logger = createLogger({
     level: 'info',

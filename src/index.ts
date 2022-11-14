@@ -60,7 +60,7 @@ async function main() {
     // Subscribe new heads
     context.chain.subscribeNewHeads((b: Header) => folderTxHander(b, context));
     // Start folder parser handler
-    setInterval(() => folderParserHandler(context), ParserInterval)
+    folderParserHandler(context, ParserInterval);
 
     // Start express
     app.listen(Port, () => {

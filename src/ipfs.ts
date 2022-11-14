@@ -15,13 +15,17 @@ export default class IpfsApi {
             },
             timeout: Timeout
         });
-        logger.info('[Ipfs] connected');
+        logger.info('[ipfs] Connected');
     }
 
     async linkCids(ipfsPath: string): Promise<string[]> {
         const cids = [];
-        for await (const link of this.ipfs.ls(ipfsPath)) {
-            cids.push(link.cid.toString());
+        try {
+            for await (const link of this.ipfs.ls(ipfsPath)) {
+                cids.push(link.cid.toString());
+            }
+        } catch (error) {
+            logger.error(`[ipfs] List links error: ${error}`);
         }
         return cids
     }
