@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import * as mysql from 'mysql';
 import { logger } from './utils';
 
 const DBName = 'FolderAnalyzer';
@@ -20,24 +20,47 @@ export default class MysqlApi {
             user: this.user,
             password: this.password
         });
-        await this.connection.connect();
-        logger.info(`[mysql] Connected`);
 
+        await this.connectPromise();
+        logger.info(`[mysql] Connected`);
         var sql = `Create Database If Not Exists ${DBName} Character Set UTF8`
-        await this.connection.query(sql);
+        await this.queryPromise(sql);
         logger.info(`[mysql] Database ${DBName} created`);
-        await this.connection.query(`use ${DBName}`);
+        await this.queryPromise(`use ${DBName}`);
 
         sql = `create table if not exists ${TableNameRoot}(
-            id int primary key auto_increment,
-            cid varchar(128) UNIQUE not null,
-            root varchar(128) not null,
-            block int not null
-        )`;
-
-        await this.connection.query(sql);
+                    id int primary key auto_increment,
+                    cid varchar(128) UNIQUE not null,
+                    root varchar(128) not null,
+                    block int not null
+                )`;
+        await this.queryPromise(sql);
         logger.info(`[mysql] Table ${TableNameRoot} created`);
     }
+
+    connectPromise = async () => {
+        return new Promise((resolve, reject) => {
+            this.connection.connect(err => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve("ok");
+                }
+            });
+        });
+    };
+
+    queryPromise = async (sql: string) => {
+        return new Promise((resolve, reject) => {
+            this.connection.query(sql, function (err, result) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    };
 
     async insertOrUpgrade(root: string, block: number, links: string[]) {
         try {
@@ -46,7 +69,7 @@ export default class MysqlApi {
                 values ('${links[index]}', '${root}', ${block})
                 on duplicate key
                 update root='${root}', block=${block}`;
-                await this.connection.execute(sql);
+                await this.queryPromise(sql);
             }
         } catch (error) {
             logger.error(`[mysql] Insert or upgrade error: ${error}`);
@@ -57,10 +80,9 @@ export default class MysqlApi {
         var res = "";
         try {
             var sql = `select * from ${TableNameRoot} where cid = '${cid}'`;
-            const [rows, _] = await this.connection.execute(sql);
-            if (rows && rows[0]) {
-                console.log(rows[0]); // For test
-                res = rows[0].root;
+            const result = await this.queryPromise(sql);
+            if (result && result[0]) {
+                res = result[0].root;
             }
         } catch (error) {
             logger.error(`[mysql] Get root error: ${error}`);
