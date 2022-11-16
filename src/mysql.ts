@@ -16,7 +16,7 @@ export default class MysqlApi {
 
     async connect() {
         this.pool = mysql.createPool({
-            connectionLimit: 10,
+            connectionLimit: 100,
             host: '127.0.0.1',
             user: this.user,
             password: this.password,
