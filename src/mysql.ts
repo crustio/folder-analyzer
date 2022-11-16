@@ -5,7 +5,7 @@ const DBName = 'FolderAnalyzer';
 const TableNameRoot = 'Root'
 
 export default class MysqlApi {
-    private connection: mysql.Connection;
+    private pool: mysql.Pool;
     private user: string;
     private password: string;
 
@@ -15,20 +15,15 @@ export default class MysqlApi {
     }
 
     async connect() {
-        this.connection = await mysql.createConnection({
+        this.pool = mysql.createPool({
+            connectionLimit: 100,
             host: '127.0.0.1',
             user: this.user,
-            password: this.password
+            password: this.password,
+            database: `${DBName}`
         });
 
-        await this.connectPromise();
-        logger.info(`[mysql] Connected`);
-        var sql = `Create Database If Not Exists ${DBName} Character Set UTF8`
-        await this.queryPromise(sql);
-        logger.info(`[mysql] Database ${DBName} created`);
-        await this.queryPromise(`use ${DBName}`);
-
-        sql = `create table if not exists ${TableNameRoot}(
+        let sql = `create table if not exists ${TableNameRoot}(
                     id int primary key auto_increment,
                     cid varchar(128) UNIQUE not null,
                     root varchar(128) not null,
@@ -38,25 +33,31 @@ export default class MysqlApi {
         logger.info(`[mysql] Table ${TableNameRoot} created`);
     }
 
-    connectPromise = async () => {
-        return new Promise((resolve, reject) => {
-            this.connection.connect(err => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve("ok");
+    executeQuery = function (query, callback) {
+        this.pool.getConnection(function (err, connection) {
+            if (err) {
+                connection.release();
+                throw err;
+            }
+            connection.query(query, function (err, rows) {
+                connection.release();
+                if (!err) {
+                    callback(null, { rows: rows });
                 }
             });
+            connection.on('error', function (err) {
+                throw err;
+            });
         });
-    };
+    }
 
     queryPromise = async (sql: string) => {
         return new Promise((resolve, reject) => {
-            this.connection.query(sql, function (err, result) {
+            this.executeQuery(sql, function (err, result) {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(result);
+                    resolve(result.rows);
                 }
             });
         });
@@ -88,9 +89,5 @@ export default class MysqlApi {
             logger.error(`[mysql] Get root error: ${error}`);
         }
         return res;
-    }
-
-    end() {
-        this.connection.end();
     }
 }
