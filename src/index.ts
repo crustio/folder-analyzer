@@ -5,11 +5,12 @@ import IpfsApi from './ipfs';
 import { AppContext, logger } from './utils';
 import ChainApi from './chain';
 import MysqlApi from './mysql';
-import { findRootHander, folderParserHandler, folderTxHander } from './handler';
+import { findRootHander, folderParserHandler, folderTxHander, mysqlKeepLiveHandler } from './handler';
 
 // Read command line parameters
 const APITimeout = '600s'
 const ParserInterval = 6 * 1000; //6s
+const MysqlKeepLiveInterval = 60 * 60 * 1000; //1 hour
 const DBUser = process.argv[2];
 if (!DBUser) {
     logger.error(`[global]: Please provide DB user name`);
@@ -61,6 +62,8 @@ async function main() {
     context.chain.subscribeNewHeads((b: Header) => folderTxHander(b, context));
     // Start folder parser handler
     folderParserHandler(context, ParserInterval);
+    // Start mysql keep live
+    mysqlKeepLiveHandler(context, MysqlKeepLiveInterval);
 
     // Start express
     app.listen(Number(Port), '0.0.0.0', () => {

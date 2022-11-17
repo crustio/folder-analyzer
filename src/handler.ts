@@ -17,6 +17,21 @@ export const folderTxHander = async (header: Header, context: AppContext) => {
     }
 }
 
+// Connect mysql for live
+export const mysqlKeepLiveHandler = async (context: AppContext, interval: number) => {
+    await sleep(20 * 1000);
+    do {
+        try {
+            logger.info(`[mysqlKeepLiveHandler] Start..`)
+            context.mysql.getRoot("abc");
+        } catch (error) {
+            logger.error(`[mysqlKeepLiveHandler] Error ${error}`)
+        }
+        await sleep(interval);
+    } while (true);
+}
+
+// Parser
 const ParserJobMaxCount = 20;
 var parserJobCurrentCount = 0;
 // Folder parser handler
