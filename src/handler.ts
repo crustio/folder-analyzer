@@ -78,3 +78,13 @@ export const findRootHander = async (req, res, context: AppContext) => {
         res.status(400).send("Please give right cid");
     }
 }
+
+export const findCidsHander = async (req, res, context: AppContext) => {
+    const root = req.query.root;
+    if (root) {
+        const cids = await context.mysql.getCids(root);
+        res.send(cids);
+    } else {
+        res.status(400).send("Please give right root");
+    }
+}

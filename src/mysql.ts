@@ -90,4 +90,21 @@ export default class MysqlApi {
         }
         return res;
     }
+
+    async getCids(root: string): Promise<string[]> {
+        var res = [];
+        try {
+            var sql = `select * from ${TableNameRoot} where root = '${root}'`;
+            const result = await this.queryPromise(sql) as any;
+            for (let index = 0; index < result.length; index++) {
+                const re = result[index];
+                if (re.cid != root) {
+                    res.push(re.cid);
+                }
+            }
+        } catch (error) {
+            logger.error(`[mysql] Get cids error: ${error}`);
+        }
+        return res;
+    }
 }
