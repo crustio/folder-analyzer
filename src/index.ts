@@ -5,7 +5,7 @@ import IpfsApi from './ipfs';
 import { AppContext, logger } from './utils';
 import ChainApi from './chain';
 import MysqlApi from './mysql';
-import { findRootHander, folderParserHandler, folderTxHander, mysqlKeepLiveHandler } from './handler';
+import { findCidsHander, findRootHander, folderParserHandler, folderTxHander, mysqlKeepLiveHandler } from './handler';
 
 // Read command line parameters
 const APITimeout = '600s'
@@ -55,6 +55,7 @@ async function main() {
     app.use(timeout(APITimeout));
     // Get routes
     app.get('/api/v1/root', (req, res) => findRootHander(req, res, context));
+    app.get('/api/v1/cids', (req, res) => findCidsHander(req, res, context));
     // Error handler
     app.use(errorHandler);
 
